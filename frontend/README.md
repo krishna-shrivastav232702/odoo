@@ -1,73 +1,80 @@
-# Welcome to your Lovable project
 
-## Project info
+# EcoFinds Frontend
 
-**URL**: https://lovable.dev/projects/4304b08c-7682-45bc-a796-27dd2664f4f2
+A modern, responsive frontend for the EcoFinds sustainable marketplace, built with React, Vite, TypeScript, shadcn-ui, and Tailwind CSS.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- 🔐 User authentication (sign up, sign in, JWT-based)
+- 🛍️ Product listing, search, and filtering
+- 🗂️ Category browsing and filtering
+- 🛒 Shopping cart and wishlist management
+- 💬 Real-time chat (Socket.IO integration)
+- 📦 Product detail and add-to-cart
+- 📝 Add/edit product listings (for sellers)
+- 📱 Responsive design for mobile and desktop
+- 🌙 Light/dark mode support
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4304b08c-7682-45bc-a796-27dd2664f4f2) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
+- React
 - Vite
 - TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- shadcn-ui (UI components)
+- Tailwind CSS (utility-first styling)
+- Context API (state management)
+- Socket.IO-client (real-time chat)
+- Fetch API (backend communication)
 
-## How can I deploy this project?
+## Implementation Notes
 
-Simply open [Lovable](https://lovable.dev/projects/4304b08c-7682-45bc-a796-27dd2664f4f2) and click on Share -> Publish.
+- Uses Context Providers for Auth, Cart, Search, and Wishlist
+- Product data is fetched from the backend API (`/api/products`)
+- Authentication state is persisted with JWT in localStorage
+- UI built with shadcn-ui and Tailwind for a modern look
+- All API URLs are configured for local development (`localhost:3001`)
 
-## Can I connect a custom domain to my Lovable project?
+## Getting Started
 
-Yes, you can!
+1. Install dependencies:
+	```bash
+	npm install
+	```
+2. Start the development server:
+	```bash
+	npm run dev
+	```
+3. The app will be available at `http://localhost:5173` (or the port shown in your terminal)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Project Structure
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```
+frontend/
+├── public/              # Static assets
+├── src/
+│   ├── components/      # UI and page components
+│   ├── contexts/        # React context providers
+│   ├── data/            # Mock data (for development)
+│   ├── hooks/           # Custom React hooks
+│   ├── lib/             # Utility functions
+│   ├── pages/           # Page components (routing)
+│   ├── scenes/          # Scene-based UI (optional)
+│   ├── types/           # TypeScript types
+│   └── App.tsx          # Main app entry
+├── package.json
+└── tailwind.config.ts
+```
+
+## Environment Variables
+
+No environment variables are required for local development. API URLs are hardcoded for localhost. If deploying, update API URLs as needed.
+
+## Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+
+## License
+
+MIT License - see LICENSE file for details
