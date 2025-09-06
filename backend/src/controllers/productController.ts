@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { body } from 'express-validator';
 import { prisma } from '../config/database.js';
 import { AuthRequest, CreateProductRequest, SearchQuery } from '../types/index.js';
+import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from '../utils/imageUpload.js';
 
 export const createProductValidation = [
   body('title').isLength({ min: 3 }).trim(),
@@ -288,5 +289,45 @@ export const getUserProducts = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Get user products error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const uploadProductImages = async (req: AuthRequest, res: Response) => {
+  try {
+    const files = req.files as Express.Multer.File[];
+    
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No images provided' });
+    }
+
+    const uploadPromises = files.map(file => uploadToCloudinary(file));
+    const imageUrls = await Promise.all(uploadPromises);
+
+    res.json({
+      message: 'Images uploaded successfully',
+      imageUrls
+    });
+  } catch (error) {
+    console.error('Upload images error:', error);
+    res.status(500).json({ error: 'Failed to upload images' });
+  }
+};
+
+export const deleteProductImage = async (req: AuthRequest, res: Response) => {
+  try {
+    const { imageUrl } = req.body;
+    
+    if (!imageUrl) {
+      return res.status(400).json({ error: 'Image URL is required' });
+    }
+
+    // Extract public ID from Cloudinary URL
+    const publicId = extractPublicId(imageUrl);
+    await deleteFromCloudinary(publicId);
+
+    res.json({ message: 'Image deleted successfully' });
+  } catch (error) {
+    console.error('Delete image error:', error);
+    res.status(500).json({ error: 'Failed to delete image' });
   }
 };
