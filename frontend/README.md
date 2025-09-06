@@ -75,6 +75,3 @@ No environment variables are required for local development. API URLs are hardco
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 
-## License
-
-MIT License - see LICENSE file for details
