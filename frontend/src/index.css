@@ -1,1 +1,167 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* EcoFinds Sustainable Design System */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Sustainable Color Palette - All HSL */
+    --background: 40 23% 97%;
+    --foreground: 95 15% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 95 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 95 15% 15%;
+
+    /* Eco Green Primary Colors */
+    --primary: 95 35% 25%;
+    --primary-foreground: 40 23% 97%;
+    --primary-light: 95 25% 45%;
+    --primary-lighter: 95 20% 65%;
+
+    /* Natural Secondary Colors */
+    --secondary: 85 15% 85%;
+    --secondary-foreground: 95 35% 25%;
+
+    /* Earth Tone Accents */
+    --accent: 25 35% 75%;
+    --accent-foreground: 95 35% 25%;
+
+    --muted: 85 15% 92%;
+    --muted-foreground: 95 10% 45%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --warning: 45 100% 60%;
+    --warning-foreground: 45 100% 10%;
+
+    --success: 120 40% 50%;
+    --success-foreground: 0 0% 98%;
+
+    --border: 85 15% 88%;
+    --input: 85 15% 88%;
+    --ring: 95 35% 25%;
+
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(95, 35%, 25%) 0%, hsl(95, 25%, 45%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(85, 15%, 85%) 0%, hsl(40, 23%, 97%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(25, 35%, 75%) 0%, hsl(45, 30%, 85%) 100%);
+
+    /* Shadows */
+    --shadow-subtle: 0 2px 8px hsl(95, 35%, 25%, 0.05);
+    --shadow-medium: 0 4px 16px hsl(95, 35%, 25%, 0.1);
+    --shadow-strong: 0 8px 32px hsl(95, 35%, 25%, 0.15);
+  }
+
+  .dark {
+    --background: 95 15% 8%;
+    --foreground: 40 23% 92%;
+
+    --card: 95 15% 12%;
+    --card-foreground: 40 23% 92%;
+
+    --popover: 95 15% 12%;
+    --popover-foreground: 40 23% 92%;
+
+    --primary: 95 25% 65%;
+    --primary-foreground: 95 15% 8%;
+    --primary-light: 95 20% 75%;
+    --primary-lighter: 95 15% 85%;
+
+    --secondary: 95 10% 20%;
+    --secondary-foreground: 40 23% 92%;
+
+    --accent: 25 25% 35%;
+    --accent-foreground: 40 23% 92%;
+
+    --muted: 95 10% 16%;
+    --muted-foreground: 95 5% 55%;
+
+    --border: 95 10% 20%;
+    --input: 95 10% 20%;
+    --ring: 95 25% 65%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(95, 25%, 65%) 0%, hsl(95, 20%, 75%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(95, 10%, 20%) 0%, hsl(95, 15%, 12%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(25, 25%, 35%) 0%, hsl(25, 20%, 45%) 100%);
+
+    --shadow-subtle: 0 2px 8px hsl(0, 0%, 0%, 0.2);
+    --shadow-medium: 0 4px 16px hsl(0, 0%, 0%, 0.3);
+    --shadow-strong: 0 8px 32px hsl(0, 0%, 0%, 0.4);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  .shadow-subtle {
+    box-shadow: var(--shadow-subtle);
+  }
+
+  .shadow-medium {
+    box-shadow: var(--shadow-medium);
+  }
+
+  .shadow-strong {
+    box-shadow: var(--shadow-strong);
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out;
+  }
+
+  .hover-lift {
+    @apply transition-all duration-200 hover:shadow-medium hover:-translate-y-1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
