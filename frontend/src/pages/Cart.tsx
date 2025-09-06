@@ -3,22 +3,16 @@ import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { ordersAPI } from '@/lib/api';
+import { CheckoutModal } from '@/components/CheckoutModal';
 
 const Cart = () => {
   const { items: cartItems, total, updateQuantity, removeItem, clearCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [shippingAddress, setShippingAddress] = useState('');
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
 
   const handleUpdateQuantity = (cartItemId: number, change: number) => {
     const item = cartItems.find(item => item.id === cartItemId);
@@ -34,29 +28,12 @@ const Cart = () => {
     removeItem(cartItemId);
   };
 
-  const handleCheckout = async () => {
-    if (cartItems.length === 0) return;
+  const handleProceedToCheckout = () => {
+    setIsCheckoutModalOpen(true);
+  };
 
-    setIsProcessing(true);
-    try {
-      const response = await ordersAPI.checkout({ shippingAddress });
-      
-      toast({
-        title: "Order placed successfully!",
-        description: `Order #${response.data.order.id} has been created.`,
-      });
-      
-      setIsCheckoutOpen(false);
-      navigate('/purchases');
-    } catch (error: any) {
-      toast({
-        title: "Checkout failed",
-        description: error.response?.data?.error || "Failed to process your order.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleCloseCheckoutModal = () => {
+    setIsCheckoutModalOpen(false);
   };
 
   if (cartItems.length === 0) {
@@ -180,42 +157,12 @@ const Cart = () => {
               </div>
 
               <div className="space-y-2 pt-4">
-                <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full gradient-primary text-primary-foreground border-0 hover:opacity-90">
-                      Proceed to Checkout
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Complete Your Order</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="shipping">Shipping Address</Label>
-                        <Textarea
-                          id="shipping"
-                          placeholder="Enter your shipping address..."
-                          value={shippingAddress}
-                          onChange={(e) => setShippingAddress(e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div className="border-t pt-4">
-                        <div className="flex justify-between text-lg font-semibold mb-4">
-                          <span>Total: ${total.toFixed(2)}</span>
-                        </div>
-                        <Button 
-                          onClick={handleCheckout}
-                          disabled={isProcessing}
-                          className="w-full gradient-primary text-primary-foreground border-0 hover:opacity-90"
-                        >
-                          {isProcessing ? 'Processing...' : 'Place Order'}
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button 
+                  onClick={handleProceedToCheckout}
+                  className="w-full gradient-primary text-primary-foreground border-0 hover:opacity-90"
+                >
+                  Proceed to Checkout
+                </Button>
                 
                 <Button 
                   variant="outline" 
@@ -233,6 +180,11 @@ const Cart = () => {
           </Card>
         </div>
       </div>
+
+      <CheckoutModal 
+        isOpen={isCheckoutModalOpen} 
+        onClose={handleCloseCheckoutModal} 
+      />
     </div>
   );
 };
