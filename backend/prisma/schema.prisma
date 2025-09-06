@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,4 +10,148 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  username     String    @unique
+  fullName     String?   @map("full_name")
+  phone        String?
+  address      String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
+
+  products      Product[]     @relation("SellerProducts")
+  cartItems     CartItem[]
+  orders        Order[]       @relation("BuyerOrders")
+  orderItems    OrderItem[]   @relation("SellerOrderItems")
+  notifications Notification[]
+
+  buyerConversations  Conversation[] @relation("BuyerConversations")
+  sellerConversations Conversation[] @relation("SellerConversations")
+  sentMessages        Message[]      @relation("SentMessages")
+
+  @@map("users")
+}
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  sellerId    Int       @map("seller_id")
+  title       String
+  description String?
+  price       Float
+  categoryId  Int       @map("category_id")
+  condition   String    // 'new', 'like_new', 'good', 'fair', 'poor'
+  status      String    @default("available") // 'available', 'sold', 'reserved'
+  imageUrls   String[]  @map("image_urls")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
+
+  seller        User           @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: Cascade)
+  category      Category       @relation(fields: [categoryId], references: [id])
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  conversations Conversation[]
+
+  @@map("products")
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+
+  @@map("categories")
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  productId Int      @map("product_id")
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id              Int       @id @default(autoincrement())
+  buyerId         Int       @map("buyer_id")
+  totalAmount     Float     @map("total_amount")
+  shippingAddress String?   @map("shipping_address")
+  status          String    @default("pending") // 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @updatedAt @map("updated_at")
+
+  buyer      User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  orderItems OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int   @id @default(autoincrement())
+  orderId   Int   @map("order_id")
+  productId Int   @map("product_id")
+  sellerId  Int   @map("seller_id")
+  title     String
+  price     Float
+  quantity  Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+  seller  User    @relation("SellerOrderItems", fields: [sellerId], references: [id])
+
+  @@map("order_items")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  title     String
+  message   String
+  type      String   // 'order', 'product', 'system'
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Conversation {
+  id        Int      @id @default(autoincrement())
+  buyerId   Int      @map("buyer_id")
+  sellerId  Int      @map("seller_id")
+  productId Int?     @map("product_id") // Optional: conversation about specific product
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  buyer    User      @relation("BuyerConversations", fields: [buyerId], references: [id])
+  seller   User      @relation("SellerConversations", fields: [sellerId], references: [id])
+  product  Product?  @relation(fields: [productId], references: [id])
+  messages Message[]
+
+  @@unique([buyerId, sellerId, productId])
+  @@map("conversations")
+}
+
+model Message {
+  id             Int      @id @default(autoincrement())
+  conversationId Int      @map("conversation_id")
+  senderId       Int      @map("sender_id")
+  content        String
+  messageType    String   @default("text") @map("message_type") // 'text', 'image', 'offer'
+  isRead         Boolean  @default(false) @map("is_read")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("SentMessages", fields: [senderId], references: [id])
+
+  @@map("messages")
+}
 
