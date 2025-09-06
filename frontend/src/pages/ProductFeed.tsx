@@ -1,30 +1,20 @@
-import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProductCard from '@/components/ProductCard';
 import CategoryFilter from '@/components/CategoryFilter';
-import { mockProducts } from '@/data/mockData';
-import { Product } from '@/types';
+import { useSearch } from '@/contexts/SearchContext';
 
 const ProductFeed = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  const filteredProducts = mockProducts.filter((product) => {
-    const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleAddToCart = (product: Product) => {
-    toast({
-      title: "Added to cart!",
-      description: `${product.title} has been added to your cart.`,
-    });
-  };
+  const { 
+    searchQuery, 
+    setSearchQuery, 
+    selectedCategory, 
+    setSelectedCategory,
+    sortBy,
+    setSortBy,
+    filteredProducts 
+  } = useSearch();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -41,8 +31,8 @@ const ProductFeed = () => {
 
       {/* Search and Filters */}
       <div className="space-y-6 mb-8">
-        <div className="max-w-md mx-auto">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+          <div className="relative max-w-md w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input 
               placeholder="Search products..." 
@@ -50,6 +40,22 @@ const ProductFeed = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 border-border/50 focus:border-primary"
             />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="title">Title A-Z</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -59,13 +65,21 @@ const ProductFeed = () => {
         />
       </div>
 
+      {/* Results Summary */}
+      {searchQuery && (
+        <div className="mb-6 text-center">
+          <p className="text-muted-foreground">
+            Found {filteredProducts.length} result{filteredProducts.length !== 1 ? 's' : ''} for "{searchQuery}"
+          </p>
+        </div>
+      )}
+
       {/* Products Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredProducts.map((product) => (
           <ProductCard 
             key={product.id} 
             product={product}
-            onAddToCart={handleAddToCart}
           />
         ))}
       </div>

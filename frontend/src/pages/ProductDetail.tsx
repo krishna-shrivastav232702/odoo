@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, ShoppingCart, User, Calendar, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { ProductLens } from '@/components/ProductLens';
 import { mockProducts } from '@/data/mockData';
 
@@ -13,7 +14,8 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLiked, setIsLiked] = useState(false);
+  const { addItem } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const product = mockProducts.find(p => p.id === id);
 
@@ -29,17 +31,18 @@ const ProductDetail = () => {
   }
 
   const handleAddToCart = () => {
+    addItem(product);
     toast({
       title: "Added to cart!",
       description: `${product.title} has been added to your cart.`,
     });
   };
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
+  const handleToggleWishlist = () => {
+    toggleWishlist(product);
     toast({
-      title: isLiked ? "Removed from wishlist" : "Added to wishlist",
-      description: isLiked 
+      title: isInWishlist(product.id) ? "Removed from wishlist" : "Added to wishlist",
+      description: isInWishlist(product.id) 
         ? "Item removed from your wishlist." 
         : "Item saved to your wishlist.",
     });
@@ -113,10 +116,10 @@ const ProductDetail = () => {
             <Button 
               variant="outline" 
               size="lg"
-              onClick={handleLike}
-              className={isLiked ? "text-red-500 border-red-500" : ""}
+              onClick={handleToggleWishlist}
+              className={isInWishlist(product.id) ? "text-red-500 border-red-500" : ""}
             >
-              <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+              <Heart className={`w-5 h-5 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
             </Button>
           </div>
 

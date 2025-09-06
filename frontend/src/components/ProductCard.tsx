@@ -1,19 +1,48 @@
-import { Heart, ShoppingCart } from 'lucide-react';
+import { Heart, ShoppingCart, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CardBody, CardContainer, CardItem } from '@/components/ui/3d-card';
+import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/types';
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart?: (product: Product) => void;
 }
 
-const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
+const ProductCard = ({ product }: ProductCardProps) => {
+  const { addItem } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { toast } = useToast();
+  const [isAdded, setIsAdded] = useState(false);
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    onAddToCart?.(product);
+    addItem(product);
+    setIsAdded(true);
+    toast({
+      title: "Added to cart!",
+      description: `${product.title} has been added to your cart.`,
+    });
+    
+    // Reset the button after 2 seconds
+    setTimeout(() => {
+      setIsAdded(false);
+    }, 2000);
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toggleWishlist(product);
+    toast({
+      title: isInWishlist(product.id) ? "Removed from wishlist" : "Added to wishlist",
+      description: isInWishlist(product.id) 
+        ? "Item removed from your wishlist." 
+        : "Item saved to your wishlist.",
+    });
   };
 
   return (
@@ -40,8 +69,13 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
             <Badge variant="secondary" className="text-xs">
               {product.category}
             </Badge>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:text-primary">
-              <Heart className="w-4 h-4" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={`h-8 w-8 p-0 hover:text-primary ${isInWishlist(product.id) ? 'text-red-500' : ''}`}
+              onClick={handleToggleWishlist}
+            >
+              <Heart className={`w-4 h-4 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
             </Button>
           </CardItem>
 
@@ -68,10 +102,20 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
             <Button 
               onClick={handleAddToCart}
               size="sm"
-              className="gradient-primary text-primary-foreground border-0 hover:opacity-90"
+              className={`${isAdded ? 'bg-green-600 hover:bg-green-700' : 'gradient-primary hover:opacity-90'} text-primary-foreground border-0 transition-all duration-200`}
+              disabled={isAdded}
             >
-              <ShoppingCart className="w-4 h-4 mr-1" />
-              Add
+              {isAdded ? (
+                <>
+                  <Check className="w-4 h-4 mr-1" />
+                  Added to Cart
+                </>
+              ) : (
+                <>
+                  <ShoppingCart className="w-4 h-4 mr-1" />
+                  Add
+                </>
+              )}
             </Button>
           </CardItem>
         </div>

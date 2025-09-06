@@ -1,14 +1,15 @@
-import { Search, ShoppingCart, User, Leaf, Plus } from 'lucide-react';
+import { ShoppingCart, User, Leaf, Plus } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
 import { Badge } from '@/components/ui/badge';
-import { mockCartItems } from '@/data/mockData';
+import { useCart } from '@/contexts/CartContext';
+
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const cartItemCount = mockCartItems.length;
+  const { itemCount } = useCart();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/80 backdrop-blur-md shadow-subtle">
@@ -25,16 +26,7 @@ const Header = () => {
             EcoFinds
           </Link>
 
-          {/* Search Bar - Hidden on mobile */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input 
-                placeholder="Search sustainable finds..." 
-                className="pl-10 border-border/50 focus:border-primary"
-              />
-            </div>
-          </div>
+
 
           {/* Navigation */}
           <div className="flex items-center gap-4">
@@ -57,12 +49,12 @@ const Header = () => {
               className="relative"
             >
               <ShoppingCart className="w-5 h-5" />
-              {cartItemCount > 0 && (
+              {itemCount > 0 && (
                 <Badge 
                   variant="destructive" 
                   className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs"
                 >
-                  {cartItemCount}
+                  {itemCount}
                 </Badge>
               )}
             </Button>
@@ -80,16 +72,7 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
-        <div className="md:hidden pb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input 
-              placeholder="Search sustainable finds..." 
-              className="pl-10 border-border/50 focus:border-primary"
-            />
-          </div>
-        </div>
+
       </div>
     </header>
   );

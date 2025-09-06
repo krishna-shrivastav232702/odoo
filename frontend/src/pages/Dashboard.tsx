@@ -7,13 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { mockUser, mockProducts, mockCartItems, mockPurchases } from '@/data/mockData';
+import { useCart } from '@/contexts/CartContext';
+import { mockUser, mockProducts, mockPurchases } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState(mockUser);
   const { toast } = useToast();
+  const { itemCount } = useCart();
 
   const userProducts = mockProducts.filter(p => p.sellerId === mockUser.id);
   const totalEarnings = userProducts.reduce((sum, product) => sum + product.price, 0);
@@ -150,7 +152,7 @@ const Dashboard = () => {
               <Button asChild variant="outline">
                 <Link to="/cart">
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  View Cart ({mockCartItems.length})
+                  View Cart ({itemCount})
                 </Link>
               </Button>
               

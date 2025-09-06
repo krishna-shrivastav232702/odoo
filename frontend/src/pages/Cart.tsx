@@ -1,43 +1,36 @@
-import { useState } from 'react';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { mockCartItems } from '@/data/mockData';
-import { CartItem } from '@/types';
+import { useCart } from '@/contexts/CartContext';
 import { Link } from 'react-router-dom';
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>(mockCartItems);
+  const { items: cartItems, total, updateQuantity, removeItem, clearCart } = useCart();
   const { toast } = useToast();
 
-  const updateQuantity = (id: string, change: number) => {
-    setCartItems(items => 
-      items.map(item => 
-        item.id === id 
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
-    );
+  const handleUpdateQuantity = (id: string, change: number) => {
+    const item = cartItems.find(item => item.id === id);
+    if (item) {
+      updateQuantity(id, item.quantity + change);
+    }
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+  const handleRemoveItem = (id: string) => {
+    removeItem(id);
     toast({
       title: "Item removed",
       description: "Item has been removed from your cart.",
     });
   };
 
-  const total = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-
   const handleCheckout = () => {
     toast({
       title: "Checkout successful!",
       description: "Thank you for your sustainable purchase.",
     });
-    setCartItems([]);
+    clearCart();
   };
 
   if (cartItems.length === 0) {
@@ -102,7 +95,7 @@ const Cart = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => updateQuantity(item.id, -1)}
+                        onClick={() => handleUpdateQuantity(item.id, -1)}
                         disabled={item.quantity <= 1}
                       >
                         <Minus className="w-3 h-3" />
@@ -111,7 +104,7 @@ const Cart = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => updateQuantity(item.id, 1)}
+                        onClick={() => handleUpdateQuantity(item.id, 1)}
                       >
                         <Plus className="w-3 h-3" />
                       </Button>
@@ -120,7 +113,7 @@ const Cart = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => handleRemoveItem(item.id)}
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />
