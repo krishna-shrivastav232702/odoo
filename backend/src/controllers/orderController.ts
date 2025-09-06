@@ -11,7 +11,6 @@ export const checkout = async (req: AuthRequest, res: Response) => {
   try {
     const { shippingAddress } = req.body;
 
-    // Get cart items
     const cartItems = await prisma.cartItem.findMany({
       where: { userId: req.user!.id },
       include: {
@@ -29,7 +28,6 @@ export const checkout = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Cart is empty' });
     }
 
-    // Check if all products are still available
     const unavailableItems = cartItems.filter((item: any) => item.product.status !== 'available');
     if (unavailableItems.length > 0) {
       return res.status(400).json({ 
@@ -41,10 +39,8 @@ export const checkout = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Calculate total
     const totalAmount = cartItems.reduce((sum: number, item: any) => sum + (item.product.price * item.quantity), 0);
 
-    // Create order
     const order = await prisma.order.create({
       data: {
         buyerId: req.user!.id,
@@ -53,10 +49,8 @@ export const checkout = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    // Create order items and update product status
     const orderItems = await Promise.all(
       cartItems.map(async (cartItem: any) => {
-        // Create order item
         const orderItem = await prisma.orderItem.create({
           data: {
             orderId: order.id,
@@ -68,13 +62,11 @@ export const checkout = async (req: AuthRequest, res: Response) => {
           }
         });
 
-        // Update product status to sold
         await prisma.product.update({
           where: { id: cartItem.product.id },
           data: { status: 'sold' }
         });
 
-        // Create notifications
         await prisma.notification.create({
           data: {
             userId: cartItem.product.sellerId,
@@ -88,12 +80,10 @@ export const checkout = async (req: AuthRequest, res: Response) => {
       })
     );
 
-    // Clear cart
     await prisma.cartItem.deleteMany({
       where: { userId: req.user!.id }
     });
 
-    // Create buyer notification
     await prisma.notification.create({
       data: {
         userId: req.user!.id,
@@ -103,7 +93,6 @@ export const checkout = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    // Get complete order details
     const completeOrder = await prisma.order.findUnique({
       where: { id: order.id },
       include: {

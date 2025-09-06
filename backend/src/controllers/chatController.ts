@@ -19,7 +19,6 @@ export const startConversation = async (req: AuthRequest, res: Response) => {
     const { sellerId, productId } = req.body;
     const buyerId = req.user!.id;
 
-    // Check if conversation already exists
     let conversation = await prisma.conversation.findFirst({
       where: {
         buyerId,
@@ -34,7 +33,6 @@ export const startConversation = async (req: AuthRequest, res: Response) => {
     });
 
     if (!conversation) {
-      // Create new conversation
       conversation = await prisma.conversation.create({
         data: {
           buyerId,
@@ -137,7 +135,6 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     const { conversationId, content, messageType = 'text' } = req.body;
     const senderId = req.user!.id;
 
-    // Verify conversation exists and user is part of it
     const conversation = await prisma.conversation.findUnique({
       where: { id: parseInt(conversationId) }
     });
@@ -150,7 +147,6 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    // Create message
     const message = await prisma.message.create({
       data: {
         conversationId: parseInt(conversationId),
@@ -163,7 +159,6 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    // Update conversation timestamp
     await prisma.conversation.update({
       where: { id: parseInt(conversationId) },
       data: { updatedAt: new Date() }

@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { body, query } from 'express-validator';
+import { body } from 'express-validator';
 import { prisma } from '../config/database.js';
 import { AuthRequest, CreateProductRequest, SearchQuery } from '../types/index.js';
 
@@ -72,7 +72,6 @@ export const getProducts = async (req: AuthRequest, res: Response) => {
       status: 'available'
     };
 
-    // Search by title and description
     if (q) {
       where.OR = [
         { title: { contains: q, mode: 'insensitive' } },
@@ -80,24 +79,20 @@ export const getProducts = async (req: AuthRequest, res: Response) => {
       ];
     }
 
-    // Filter by category
     if (category) {
       where.categoryId = parseInt(category);
     }
 
-    // Filter by price range
     if (minPrice || maxPrice) {
       where.price = {};
       if (minPrice) where.price.gte = parseFloat(minPrice.toString());
       if (maxPrice) where.price.lte = parseFloat(maxPrice.toString());
     }
 
-    // Filter by condition
     if (condition) {
       where.condition = condition;
     }
 
-    // Sorting
     let orderBy: any = {};
     switch (sortBy) {
       case 'price':

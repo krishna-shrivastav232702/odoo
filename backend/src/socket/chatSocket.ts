@@ -16,7 +16,6 @@ export const initializeSocket = (server: HttpServer) => {
     }
   });
 
-  // Authentication middleware for socket connections
   io.use(async (socket: any, next) => {
     try {
       const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
@@ -49,13 +48,10 @@ export const initializeSocket = (server: HttpServer) => {
   io.on('connection', (socket: AuthSocket) => {
     console.log(`User ${socket.user?.username} connected to chat`);
 
-    // Join user to their personal room for notifications
     socket.join(`user_${socket.user?.id}`);
 
-    // Join conversation rooms
     socket.on('join_conversation', async (conversationId: number) => {
       try {
-        // Verify user is part of this conversation
         const conversation = await prisma.conversation.findUnique({
           where: { id: conversationId }
         });
@@ -69,7 +65,6 @@ export const initializeSocket = (server: HttpServer) => {
       }
     });
 
-    // Handle sending messages
     socket.on('send_message', async (data: {
       conversationId: number;
       content: string;
@@ -78,7 +73,6 @@ export const initializeSocket = (server: HttpServer) => {
       try {
         const { conversationId, content, messageType = 'text' } = data;
 
-        // Verify conversation exists and user is part of it
         const conversation = await prisma.conversation.findUnique({
           where: { id: conversationId },
           include: {
@@ -98,7 +92,6 @@ export const initializeSocket = (server: HttpServer) => {
           return;
         }
 
-        // Create message in database
         const message = await prisma.message.create({
           data: {
             conversationId,
@@ -116,13 +109,11 @@ export const initializeSocket = (server: HttpServer) => {
           }
         });
 
-        // Update conversation timestamp
         await prisma.conversation.update({
           where: { id: conversationId },
           data: { updatedAt: new Date() }
         });
 
-        // Emit message to conversation room
         io.to(`conversation_${conversationId}`).emit('new_message', {
           id: message.id,
           conversationId: message.conversationId,
@@ -134,7 +125,6 @@ export const initializeSocket = (server: HttpServer) => {
           sender: message.sender
         });
 
-        // Create notification for the other user
         const recipientId = conversation.buyerId === socket.user?.id ? conversation.sellerId : conversation.buyerId;
         
         await prisma.notification.create({
@@ -146,7 +136,6 @@ export const initializeSocket = (server: HttpServer) => {
           }
         });
 
-        // Send notification to recipient
         io.to(`user_${recipientId}`).emit('new_notification', {
           title: 'New Message',
           message: `${socket.user?.username} sent you a message${conversation.product ? ` about "${conversation.product.title}"` : ''}`,
@@ -160,7 +149,6 @@ export const initializeSocket = (server: HttpServer) => {
       }
     });
 
-    // Handle typing indicators
     socket.on('typing_start', (conversationId: number) => {
       socket.to(`conversation_${conversationId}`).emit('user_typing', {
         userId: socket.user?.id,
@@ -174,7 +162,6 @@ export const initializeSocket = (server: HttpServer) => {
       });
     });
 
-    // Handle message read status
     socket.on('mark_messages_read', async (conversationId: number) => {
       try {
         await prisma.message.updateMany({
@@ -186,7 +173,6 @@ export const initializeSocket = (server: HttpServer) => {
           data: { isRead: true }
         });
 
-        // Notify other users in conversation that messages were read
         socket.to(`conversation_${conversationId}`).emit('messages_read', {
           conversationId,
           readById: socket.user?.id

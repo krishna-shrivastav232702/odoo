@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -41,8 +38,8 @@ model Product {
   description String?
   price       Float
   categoryId  Int       @map("category_id")
-  condition   String    // 'new', 'like_new', 'good', 'fair', 'poor'
-  status      String    @default("available") // 'available', 'sold', 'reserved'
+  condition   String
+  status      String    @default("available")
   imageUrls   String[]  @map("image_urls")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime? @updatedAt @map("updated_at")
@@ -83,7 +80,7 @@ model Order {
   buyerId         Int       @map("buyer_id")
   totalAmount     Float     @map("total_amount")
   shippingAddress String?   @map("shipping_address")
-  status          String    @default("pending") // 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'
+  status          String    @default("pending")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime? @updatedAt @map("updated_at")
 
@@ -114,7 +111,7 @@ model Notification {
   userId    Int      @map("user_id")
   title     String
   message   String
-  type      String   // 'order', 'product', 'system'
+  type      String
   read      Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -127,7 +124,7 @@ model Conversation {
   id        Int      @id @default(autoincrement())
   buyerId   Int      @map("buyer_id")
   sellerId  Int      @map("seller_id")
-  productId Int?     @map("product_id") // Optional: conversation about specific product
+  productId Int?     @map("product_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -145,7 +142,7 @@ model Message {
   conversationId Int      @map("conversation_id")
   senderId       Int      @map("sender_id")
   content        String
-  messageType    String   @default("text") @map("message_type") // 'text', 'image', 'offer'
+  messageType    String   @default("text") @map("message_type")
   isRead         Boolean  @default(false) @map("is_read")
   createdAt      DateTime @default(now()) @map("created_at")
 

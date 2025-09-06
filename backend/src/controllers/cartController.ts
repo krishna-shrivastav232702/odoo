@@ -12,7 +12,6 @@ export const addToCart = async (req: AuthRequest, res: Response) => {
   try {
     const { productId, quantity = 1 } = req.body;
 
-    // Check if product exists and is available
     const product = await prisma.product.findUnique({
       where: { id: productId }
     });
@@ -29,7 +28,6 @@ export const addToCart = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Cannot add your own product to cart' });
     }
 
-    // Check if item already in cart
     const existingCartItem = await prisma.cartItem.findUnique({
       where: {
         userId_productId: {
