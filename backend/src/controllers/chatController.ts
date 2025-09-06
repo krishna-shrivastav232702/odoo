@@ -170,3 +170,63 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const markAsRead = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Mark all messages in this conversation as read for the current user
+    await prisma.message.updateMany({
+      where: {
+        conversationId: parseInt(id),
+        senderId: { not: userId },
+        isRead: false
+      },
+      data: {
+        isRead: true
+      }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark as read error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getUnreadCount = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const count = await prisma.message.count({
+      where: {
+        senderId: { not: userId },
+        isRead: false,
+        conversation: {
+          OR: [
+            { buyerId: userId },
+            { sellerId: userId }
+          ]
+        }
+      }
+    });
+
+    res.json({ count });
+  } catch (error) {
+    console.error('Get unread count error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

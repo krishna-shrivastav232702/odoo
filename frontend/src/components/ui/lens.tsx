@@ -1,86 +1,106 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface LensProps {
   children: React.ReactNode;
   lensSize?: number;
+  zoomFactor?: number;
   hovering?: boolean;
   setHovering?: (hovering: boolean) => void;
+  className?: string;
 }
 
 export const Lens: React.FC<LensProps> = ({
   children,
-  lensSize = 200,
+  lensSize = 150,
+  zoomFactor = 2.5,
   hovering,
   setHovering,
+  className,
 }) => {
+  const [isHovering, setIsHovering] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
-  const [localIsHovering, setLocalIsHovering] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 100, y: 100 });
+  const imageRef = useRef<HTMLImageElement>(null);
 
-  const isHovering = hovering !== undefined ? hovering : localIsHovering;
-  const setIsHovering = setHovering || setLocalIsHovering;
+  const actualHovering = hovering !== undefined ? hovering : isHovering;
+  const actualSetHovering = setHovering || setIsHovering;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    if (!containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    setMousePosition({ x, y });
+
+    setPosition({ x, y });
   };
 
-  // Extract image source from children
-  const getImageSrc = () => {
-    if (React.isValidElement(children)) {
-      return (children.props as any).src;
-    }
-    return '';
+  const handleMouseEnter = () => {
+    actualSetHovering(true);
   };
+
+  const handleMouseLeave = () => {
+    actualSetHovering(false);
+  };
+
+  // Get the image element from children
+  const getImageSrc = () => {
+    if (React.isValidElement(children) && children.props.src) {
+      return children.props.src;
+    }
+    return null;
+  };
+
+  const imageSrc = getImageSrc();
 
   return (
     <div
       ref={containerRef}
-      className="relative overflow-hidden rounded-2xl cursor-none"
+      className={cn("relative overflow-hidden cursor-crosshair", className)}
       onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      {/* Main image with blur effect when hovering */}
-      <motion.div
-        animate={{
-          filter: isHovering ? "blur(4px)" : "blur(0px)",
-        }}
-        transition={{ duration: 0.2 }}
-      >
-        {children}
-      </motion.div>
+      {children}
 
-      {/* Lens effect - shows clear image in circular area */}
-      {isHovering && (
-        <motion.div
-          className="absolute pointer-events-none z-10"
-          style={{
-            left: mousePosition.x - lensSize / 2,
-            top: mousePosition.y - lensSize / 2,
-            width: lensSize,
-            height: lensSize,
-          }}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.5 }}
-          transition={{ duration: 0.2 }}
-        >
+      {actualHovering && imageSrc && (
+        <>
+          {/* Lens circle overlay */}
           <div
-            className="w-full h-full rounded-full overflow-hidden border-2 border-white shadow-xl"
+            className="absolute pointer-events-none z-20 border-2 border-white shadow-lg rounded-full"
             style={{
-              backgroundImage: `url(${getImageSrc()})`,
-              backgroundSize: `${containerRef.current?.offsetWidth}px ${containerRef.current?.offsetHeight}px`,
-              backgroundPosition: `${-(mousePosition.x - lensSize / 2)}px ${-(mousePosition.y - lensSize / 2)}px`,
-              backgroundRepeat: 'no-repeat',
+              width: lensSize,
+              height: lensSize,
+              left: position.x - lensSize / 2,
+              top: position.y - lensSize / 2,
+              background: `radial-gradient(circle, transparent 45%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.9) 55%, transparent 60%)`,
             }}
           />
-        </motion.div>
+          
+          {/* Zoomed image */}
+          <div
+            className="absolute pointer-events-none z-30 rounded-full overflow-hidden border-2 border-white shadow-xl"
+            style={{
+              width: lensSize,
+              height: lensSize,
+              left: position.x - lensSize / 2,
+              top: position.y - lensSize / 2,
+            }}
+          >
+            <div
+              className="w-full h-full"
+              style={{
+                backgroundImage: `url(${imageSrc})`,
+                backgroundSize: `${containerRef.current?.offsetWidth * zoomFactor}px ${containerRef.current?.offsetHeight * zoomFactor}px`,
+                backgroundPosition: `-${(position.x * zoomFactor) - (lensSize / 2)}px -${(position.y * zoomFactor) - (lensSize / 2)}px`,
+                backgroundRepeat: 'no-repeat',
+                imageRendering: 'high-quality',
+              }}
+            />
+          </div>
+        </>
       )}
     </div>
   );

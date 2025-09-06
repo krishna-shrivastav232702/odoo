@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Leaf, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,26 +7,65 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    username: '',
+    fullName: '',
+  });
+
   const { toast } = useToast();
+  const { signIn, signUp, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent, type: 'login' | 'signup') => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsLoading(false);
-    toast({
-      title: type === 'login' ? 'Welcome back!' : 'Account created!',
-      description: type === 'login' 
-        ? 'You have successfully logged in.' 
-        : 'Your EcoFinds account has been created successfully.',
-    });
+
+    try {
+      if (type === 'login') {
+        await signIn(formData.email, formData.password);
+        toast({
+          title: 'Welcome back!',
+          description: 'You have successfully logged in.',
+        });
+      } else {
+        await signUp(formData.username, formData.email, formData.password, formData.fullName);
+        toast({
+          title: 'Account created!',
+          description: 'Your EcoFinds account has been created successfully.',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -57,11 +97,14 @@ const Auth = () => {
                   <Label htmlFor="login-email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input 
+                    <Input
                       id="login-email"
-                      type="email" 
+                      name="email"
+                      type="email"
                       placeholder="Enter your email"
                       className="pl-10"
+                      value={formData.email}
+                      onChange={handleInputChange}
                       required
                     />
                   </div>
@@ -71,11 +114,14 @@ const Auth = () => {
                   <Label htmlFor="login-password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input 
+                    <Input
                       id="login-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       className="pl-10 pr-10"
+                      value={formData.password}
+                      onChange={handleInputChange}
                       required
                     />
                     <Button
@@ -90,8 +136,8 @@ const Auth = () => {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full gradient-primary text-primary-foreground border-0 hover:opacity-90"
                   disabled={isLoading}
                 >
@@ -106,12 +152,31 @@ const Auth = () => {
                   <Label htmlFor="signup-username">Username</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input 
+                    <Input
                       id="signup-username"
-                      type="text" 
+                      name="username"
+                      type="text"
                       placeholder="Choose a username"
                       className="pl-10"
+                      value={formData.username}
+                      onChange={handleInputChange}
                       required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-fullname">Full Name (Optional)</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Input
+                      id="signup-fullname"
+                      name="fullName"
+                      type="text"
+                      placeholder="Enter your full name"
+                      className="pl-10"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
                     />
                   </div>
                 </div>
@@ -120,11 +185,14 @@ const Auth = () => {
                   <Label htmlFor="signup-email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input 
+                    <Input
                       id="signup-email"
-                      type="email" 
+                      name="email"
+                      type="email"
                       placeholder="Enter your email"
                       className="pl-10"
+                      value={formData.email}
+                      onChange={handleInputChange}
                       required
                     />
                   </div>
@@ -134,11 +202,14 @@ const Auth = () => {
                   <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input 
+                    <Input
                       id="signup-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Create a password"
                       className="pl-10 pr-10"
+                      value={formData.password}
+                      onChange={handleInputChange}
                       required
                     />
                     <Button
@@ -153,8 +224,8 @@ const Auth = () => {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full gradient-primary text-primary-foreground border-0 hover:opacity-90"
                   disabled={isLoading}
                 >

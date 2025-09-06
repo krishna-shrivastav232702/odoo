@@ -1,72 +1,42 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
 interface ImageMagnifierProps {
   src: string;
   alt: string;
-  className?: string;
   magnifierSize?: number;
   zoomLevel?: number;
+  className?: string;
 }
 
 export const ImageMagnifier: React.FC<ImageMagnifierProps> = ({
   src,
   alt,
-  className = '',
   magnifierSize = 150,
   zoomLevel = 2,
+  className = ''
 }) => {
   const [showMagnifier, setShowMagnifier] = useState(false);
-  const [magnifierPos, setMagnifierPos] = useState({ x: 0, y: 0 });
-  const [imgDimensions, setImgDimensions] = useState({ width: 0, height: 0 });
-  const [naturalDimensions, setNaturalDimensions] = useState({ width: 0, height: 0 });
+  const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
+  const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
   const imgRef = useRef<HTMLImageElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => {
-      setNaturalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-    };
-    img.src = src;
-  }, [src]);
 
   const handleMouseEnter = () => {
     if (imgRef.current) {
-      const rect = imgRef.current.getBoundingClientRect();
-      setImgDimensions({ width: rect.width, height: rect.height });
+      const { width, height } = imgRef.current.getBoundingClientRect();
+      setImgSize({ width, height });
       setShowMagnifier(true);
     }
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imgRef.current || !containerRef.current) return;
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!imgRef.current) return;
 
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const imgRect = imgRef.current.getBoundingClientRect();
-    
-    // Mouse position relative to the container
-    const x = e.clientX - containerRect.left;
-    const y = e.clientY - containerRect.top;
-    
-    // Mouse position relative to the actual image
-    const imgX = e.clientX - imgRect.left;
-    const imgY = e.clientY - imgRect.top;
-    
-    // Keep magnifier within container bounds
-    const magnifierX = Math.max(0, Math.min(x - magnifierSize / 2, containerRect.width - magnifierSize));
-    const magnifierY = Math.max(0, Math.min(y - magnifierSize / 2, containerRect.height - magnifierSize));
-    
-    setMagnifierPos({ x: magnifierX, y: magnifierY });
-    
-    // Update magnifier background position
-    const magnifier = document.getElementById('magnifier');
-    if (magnifier && imgX >= 0 && imgY >= 0 && imgX <= imgRect.width && imgY <= imgRect.height) {
-      // Calculate the percentage position on the image
-      const xPercent = (imgX / imgRect.width) * 100;
-      const yPercent = (imgY / imgRect.height) * 100;
-      
-      magnifier.style.backgroundPosition = `${xPercent}% ${yPercent}%`;
-    }
+    const { left, top } = imgRef.current.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = e.clientY - top;
+
+    setMagnifierPosition({ x, y });
   };
 
   const handleMouseLeave = () => {
@@ -74,36 +44,29 @@ export const ImageMagnifier: React.FC<ImageMagnifierProps> = ({
   };
 
   return (
-    <div 
-      ref={containerRef}
-      className={`relative inline-block ${className}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
+    <div className={cn("relative overflow-hidden", className)}>
       <img
         ref={imgRef}
         src={src}
         alt={alt}
-        className="w-full h-full object-cover cursor-crosshair select-none"
-        draggable={false}
+        className="w-full h-full object-cover cursor-crosshair"
+        onMouseEnter={handleMouseEnter}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
       />
-      
+
       {showMagnifier && (
         <div
-          id="magnifier"
-          className="absolute border-2 border-white shadow-xl rounded-full pointer-events-none z-50 overflow-hidden"
+          className="absolute border-2 border-white shadow-lg rounded-full pointer-events-none z-10"
           style={{
-            left: `${magnifierPos.x}px`,
-            top: `${magnifierPos.y}px`,
-            width: `${magnifierSize}px`,
-            height: `${magnifierSize}px`,
+            width: magnifierSize,
+            height: magnifierSize,
+            left: magnifierPosition.x - magnifierSize / 2,
+            top: magnifierPosition.y - magnifierSize / 2,
             backgroundImage: `url(${src})`,
-            backgroundSize: `${zoomLevel * 100}% ${zoomLevel * 100}%`,
+            backgroundSize: `${imgSize.width * zoomLevel}px ${imgSize.height * zoomLevel}px`,
+            backgroundPosition: `-${magnifierPosition.x * zoomLevel - magnifierSize / 2}px -${magnifierPosition.y * zoomLevel - magnifierSize / 2}px`,
             backgroundRepeat: 'no-repeat',
-            opacity: 1,
-            transition: 'opacity 0.15s ease-out',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.2)',
           }}
         />
       )}

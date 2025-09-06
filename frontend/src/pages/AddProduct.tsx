@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Upload, DollarSign, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,25 +7,43 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { CATEGORIES } from '@/types';
+import { Category } from '@/types';
 import { Link, useNavigate } from 'react-router-dom';
+import { productsAPI, categoriesAPI } from '@/lib/api';
 
 const AddProduct = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: '',
+    categoryId: '',
+    condition: '',
     price: '',
-    image: ''
+    imageUrls: [] as string[]
   });
   
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Load categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await categoriesAPI.getCategories();
+        setCategories(response.data);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    };
+
+    loadCategories();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.description || !formData.category || !formData.price) {
+    
+    if (!formData.title || !formData.description || !formData.categoryId || !formData.price || !formData.condition) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields.",
@@ -36,28 +54,62 @@ const AddProduct = () => {
 
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsSubmitting(false);
-    toast({
-      title: "Product listed successfully!",
-      description: "Your item is now available for purchase.",
-    });
-    
-    navigate('/my-listings');
+    try {
+      await productsAPI.createProduct({
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        categoryId: parseInt(formData.categoryId),
+        condition: formData.condition,
+        imageUrls: formData.imageUrls
+      });
+
+      toast({
+        title: "Product listed successfully!",
+        description: "Your item is now available for purchase.",
+      });
+      
+      navigate('/my-listings');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || "Failed to create product.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleImageUpload = () => {
-    // In a real app, this would handle file upload
-    setFormData(prev => ({
-      ...prev,
-      image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop'
-    }));
-    toast({
-      title: "Image uploaded",
-      description: "Product image has been added successfully.",
-    });
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach(file => {
+        formData.append('images', file);
+      });
+
+      const response = await productsAPI.uploadImages(formData);
+      const newImageUrls = response.data.imageUrls;
+      
+      setFormData(prev => ({
+        ...prev,
+        imageUrls: [...prev.imageUrls, ...newImageUrls]
+      }));
+
+      toast({
+        title: "Images uploaded",
+        description: `${newImageUrls.length} image(s) uploaded successfully.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.response?.data?.error || "Failed to upload images.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -110,18 +162,38 @@ const AddProduct = () => {
             <div className="space-y-2">
               <Label htmlFor="category">Category *</Label>
               <Select 
-                value={formData.category} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                value={formData.categoryId} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Condition */}
+            <div className="space-y-2">
+              <Label htmlFor="condition">Condition *</Label>
+              <Select 
+                value={formData.condition} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, condition: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="like_new">Like New</SelectItem>
+                  <SelectItem value="good">Good</SelectItem>
+                  <SelectItem value="fair">Fair</SelectItem>
+                  <SelectItem value="poor">Poor</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -160,42 +232,39 @@ const AddProduct = () => {
 
             {/* Image Upload */}
             <div className="space-y-2">
-              <Label>Product Image</Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                {formData.image ? (
-                  <div className="space-y-4">
-                    <img 
-                      src={formData.image} 
-                      alt="Product preview"
-                      className="w-32 h-32 object-cover rounded-md mx-auto"
-                    />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={handleImageUpload}
-                    >
-                      Change Image
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <Upload className="w-12 h-12 mx-auto text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Add Product Image</p>
-                      <p className="text-sm text-muted-foreground">
-                        Upload a clear photo of your item
-                      </p>
-                    </div>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={handleImageUpload}
-                    >
-                      Upload Image (Placeholder)
-                    </Button>
-                  </div>
-                )}
+              <Label htmlFor="images">Product Images</Label>
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                <input
+                  type="file"
+                  id="images"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                <label htmlFor="images" className="cursor-pointer">
+                  <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Click to upload product images
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    PNG, JPG up to 10MB each
+                  </p>
+                </label>
               </div>
+              
+              {formData.imageUrls.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  {formData.imageUrls.map((url, index) => (
+                    <img
+                      key={index}
+                      src={url}
+                      alt={`Product image ${index + 1}`}
+                      className="w-full h-24 object-cover rounded"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Sustainability Note */}
@@ -208,14 +277,32 @@ const AddProduct = () => {
             </div>
 
             {/* Submit Button */}
-            <Button 
-              type="submit" 
-              className="w-full gradient-primary text-primary-foreground border-0 hover:opacity-90"
-              size="lg"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Creating Listing...' : 'List Item'}
-            </Button>
+            <div className="flex gap-4 pt-4">
+              <Button asChild variant="outline" className="flex-1">
+                <Link to="/my-listings">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Cancel
+                </Link>
+              </Button>
+              
+              <Button 
+                type="submit" 
+                className="flex-1 gradient-primary text-primary-foreground border-0 hover:opacity-90"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Package className="w-4 h-4 mr-2 animate-spin" />
+                    Listing Product...
+                  </>
+                ) : (
+                  <>
+                    <Package className="w-4 h-4 mr-2" />
+                    List Product
+                  </>
+                )}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

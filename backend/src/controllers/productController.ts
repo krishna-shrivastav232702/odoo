@@ -81,7 +81,22 @@ export const getProducts = async (req: AuthRequest, res: Response) => {
     }
 
     if (category) {
-      where.categoryId = parseInt(category);
+      // Handle both category name and category ID
+      if (isNaN(parseInt(category))) {
+        // It's a category name, find the category by name
+        const categoryRecord = await prisma.category.findFirst({
+          where: { name: { equals: category, mode: 'insensitive' } }
+        });
+        if (categoryRecord) {
+          where.categoryId = categoryRecord.id;
+        } else {
+          // If category name not found, return empty results
+          where.categoryId = -1;
+        }
+      } else {
+        // It's a category ID
+        where.categoryId = parseInt(category);
+      }
     }
 
     if (minPrice || maxPrice) {

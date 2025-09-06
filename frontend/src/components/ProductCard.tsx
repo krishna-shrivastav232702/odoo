@@ -19,27 +19,27 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   const [isAdded, setIsAdded] = useState(false);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
-    addItem(product);
-    setIsAdded(true);
-    toast({
-      title: "Added to cart!",
-      description: `${product.title} has been added to your cart.`,
-    });
-    
-    // Reset the button after 2 seconds
-    setTimeout(() => {
-      setIsAdded(false);
-    }, 2000);
+    try {
+      await addItem(product);
+      setIsAdded(true);
+      
+      // Reset the button after 2 seconds
+      setTimeout(() => {
+        setIsAdded(false);
+      }, 2000);
+    } catch (error) {
+      // Error is handled in the context
+    }
   };
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     toggleWishlist(product);
     toast({
-      title: isInWishlist(product.id) ? "Removed from wishlist" : "Added to wishlist",
-      description: isInWishlist(product.id) 
+      title: isInWishlist(product.id.toString()) ? "Removed from wishlist" : "Added to wishlist",
+      description: isInWishlist(product.id.toString()) 
         ? "Item removed from your wishlist." 
         : "Item saved to your wishlist.",
     });
@@ -54,7 +54,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <Link to={`/product/${product.id}`}>
             <div className="aspect-square overflow-hidden rounded-t-xl">
               <img 
-                src={product.image} 
+                src={product.imageUrls[0] || '/placeholder.svg'} 
                 alt={product.title}
                 className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
               />
@@ -67,15 +67,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
           {/* Category and Heart */}
           <CardItem translateZ="50" className="flex items-start justify-between mb-2">
             <Badge variant="secondary" className="text-xs">
-              {product.category}
+              {product.category.name}
             </Badge>
             <Button 
               variant="ghost" 
               size="sm" 
-              className={`h-8 w-8 p-0 hover:text-primary ${isInWishlist(product.id) ? 'text-red-500' : ''}`}
+              className={`h-8 w-8 p-0 hover:text-primary ${isInWishlist(product.id.toString()) ? 'text-red-500' : ''}`}
               onClick={handleToggleWishlist}
             >
-              <Heart className={`w-4 h-4 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+              <Heart className={`w-4 h-4 ${isInWishlist(product.id.toString()) ? 'fill-current' : ''}`} />
             </Button>
           </CardItem>
 
@@ -95,7 +95,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 ${product.price}
               </p>
               <p className="text-xs text-muted-foreground">
-                by {product.sellerName}
+                by {product.seller.username}
               </p>
             </div>
 

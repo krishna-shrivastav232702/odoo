@@ -13,7 +13,8 @@ const ProductFeed = () => {
     setSelectedCategory,
     sortBy,
     setSortBy,
-    filteredProducts 
+    products,
+    isLoading
   } = useSearch();
 
   return (
@@ -69,22 +70,31 @@ const ProductFeed = () => {
       {searchQuery && (
         <div className="mb-6 text-center">
           <p className="text-muted-foreground">
-            Found {filteredProducts.length} result{filteredProducts.length !== 1 ? 's' : ''} for "{searchQuery}"
+            Found {products.length} result{products.length !== 1 ? 's' : ''} for "{searchQuery}"
           </p>
         </div>
       )}
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredProducts.map((product) => (
-          <ProductCard 
-            key={product.id} 
-            product={product}
-          />
-        ))}
-      </div>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex justify-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
 
-      {filteredProducts.length === 0 && (
+      {/* Products Grid */}
+      {!isLoading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {products.map((product) => (
+            <ProductCard 
+              key={product.id} 
+              product={product}
+            />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && products.length === 0 && (
         <div className="text-center py-16">
           <p className="text-muted-foreground text-lg">
             No products found matching your criteria.
