@@ -1,14 +1,3 @@
-<<<<<<< Updated upstream
-import './App.css'
-
-function App() {
-  return (
-    <>
-      <div className='bg-black'>hellow</div>
-    </>
-  )
-}
-=======
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -49,6 +38,5 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
->>>>>>> Stashed changes
 
 export default App;
